@@ -1,0 +1,31 @@
+bucket Upload downLoad::
+https://gist.github.com/henrikj242/af06ac41fc9554dab387c0bb3a994f85
+
+Notes::
+https://cloud.google.com/nodejs/docs/reference/pubsub/0.16.x/v1.SubscriberClient
+
+PublisherServiceApiClient:: 
+https://googleapis.github.io/google-cloud-dotnet/docs/Google.Cloud.PubSub.V1/api/Google.Cloud.PubSub.V1.SubscriberServiceApiClient.html
+
+Examples::
+https://github.com/GoogleCloudPlatform/dotnet-docs-samples/blob/master/pubsub/api/PubsubSample/Program.cs
+
+
+pubSub using push
+https://cloud.google.com/pubsub/docs/push
+
+Downloading objects
+https://cloud.google.com/storage/docs/downloading-objects#storage-download-object-csharp
+\
+VM
+jmck3000
+zs1ru%eu7|L}Ko9
+
+create:
+gsutil mb gs://mysubpub_bucket
+
+gsutil defacl set public-read gs://mysubpub_bucket
+
+
+
+C:\Users\jmck\source\repos\Google\getting-started-dotnet\aspnet\5-pubsub\packages\Newtonsoft.Json.10.0.1\lib\net45\Newtonsoft.Json.dll
