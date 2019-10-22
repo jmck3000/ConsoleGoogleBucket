@@ -9,6 +9,7 @@ using System.Text;
 using System.Linq;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
+using System.Configuration;
 
 namespace ConsoleGoogleBucket
 {
@@ -17,10 +18,10 @@ namespace ConsoleGoogleBucket
 
         //File Paths
         static string _message = "";
-        static string _bucketName = "mysubpub_bucket_files";
-        static string _credentialsPath = "C:\\Test\\GoogleBucket\\MySubPub-e47d82d44e22.json";
-        static string _folderPathUpload = "C:\\Test\\GoogleBucket\\UL";
-        static string _folderPathDownload = "C:\\Test\\GoogleBucket\\DL\\";
+        static string _bucketName; 
+        static string _credentialsPath;
+        static string _folderPathUpload;
+        static string _folderPathDownload;
 
         //Bucket
         private static StorageClient _storageClient;
@@ -28,10 +29,18 @@ namespace ConsoleGoogleBucket
         //PUB SUB
         private static TopicName _topicName;
         private static Options _options;
-        private static readonly string _projectId = "mysubpub";
+        private static string _projectId;
 
         public static void Main(string[] args)
         {
+
+            _projectId = ConfigurationManager.AppSettings["ProjectId"]; 
+
+            //UpLoad/DownLoad Options
+            _bucketName = ConfigurationManager.AppSettings["BucketName"];
+            _credentialsPath = ConfigurationManager.AppSettings["CredentialsPath"];
+            _folderPathUpload = ConfigurationManager.AppSettings["FolderPathUpload"];
+            _folderPathDownload = ConfigurationManager.AppSettings["FolderPathDownload"];
 
             //BUCKET:
             // Explicitly use service account credentials by specifying the private key file.
@@ -46,25 +55,42 @@ namespace ConsoleGoogleBucket
             _storageClient = StorageClient.Create(credential);
 
 
-            //PUB SUB
 
-            _options = new Options();
+            //PUB / SUB Options
+            var topicId = ConfigurationManager.AppSettings["TopicId"];
+            var subscriptionId = ConfigurationManager.AppSettings["SubscriptionId"];
+            _options = new Options() { TopicId = topicId, SubscriptionId = subscriptionId };
             _topicName = new TopicName(_projectId, _options.TopicId);
 
-
-            UploadAndPubLish();
-            Console.WriteLine("UPLOAD Finished: Press any key to continue.");
-            Console.ReadKey();
-
-            SubscribAndDownload(true);
+            Console.WriteLine("Start UPLOAD: y/n?");
+            var infoUp = Console.ReadKey();
             WriteLine();
-            Console.WriteLine("DownLoad Finished: Press any key to continue.");
-            Console.ReadKey();
+            if (infoUp.KeyChar == 'y')
+            {
+                UploadAndPubLish(); //PUB
+
+                WriteLine();
+                Console.WriteLine("UPLOAD Finished: Press any key to continue.");
+                Console.ReadKey();
+                WriteLine();
+
+            }
+
+            Console.WriteLine("Start DOWNLOAD: y/n?");
+            var infoDown = Console.ReadKey();
+            if (infoDown.KeyChar == 'y')
+            {
+                SubscribAndDownload(true); //SUB
+
+                WriteLine();
+                Console.WriteLine("DownLoad Finished: Press any key to continue.");
+                Console.ReadKey();
+                WriteLine();
+            }
 
 
 
-
-            // List objects
+            // List objects in C: and on cloud.
             WriteLine();
             WriteLine();
             WriteLine("IN CLOUD:");
@@ -116,22 +142,28 @@ namespace ConsoleGoogleBucket
 
         private static void PubLishFile(string fileName)
         {
-            PublisherServiceApiClient publishClient = PublisherServiceApiClient.Create();
+            try
+            {
+                PublisherServiceApiClient publishClient = PublisherServiceApiClient.Create();
 
-            var message = new QueueMessage() { FileName = fileName };
-            var json = Newtonsoft.Json.JsonConvert.SerializeObject(message);
+                var message = new QueueMessage() { FileName = fileName };
+                var json = Newtonsoft.Json.JsonConvert.SerializeObject(message);
 
-            publishClient.Publish(_topicName, new[] { new PubsubMessage()
+                publishClient.Publish(_topicName, new[] { new PubsubMessage()
             {
                 Data = Google.Protobuf.ByteString.CopyFromUtf8(json)
             } });
+            }
+            catch (Exception e)
+            {
+                _message = e.Message;
+            }
         }
 
 
         public static void SubscribAndDownload(bool acknowledge)
         {
             // [START pubsub_subscriber_sync_pull]
-
             SubscriptionName subscriptionName = new SubscriptionName(_projectId, _options.SubscriptionId);
 
             SubscriberServiceApiClient subscriberClient = SubscriberServiceApiClient.Create();
@@ -159,10 +191,8 @@ namespace ConsoleGoogleBucket
                     {
                         Task.Factory.StartNew((Action)(() => AcknowledgeMessage(subscriberClient, subscriptionName, response)));
                         //AcknowledgeMessage(subscriberClient, subscriptionName, response)
-
                     }
                     // [END pubsub_subscriber_sync_pull]
-
                 }
                 catch (Exception e)
                 {
@@ -197,8 +227,9 @@ namespace ConsoleGoogleBucket
 
         public class Options
         {
-            public string TopicId = "file-process-queue";
-            public string SubscriptionId = "shared-file-subscription";
+            public string TopicId { get; set; }
+            public string SubscriptionId { get; set; }
+
         };
 
 
