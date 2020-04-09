@@ -38,9 +38,13 @@ namespace ConsoleGoogleBucket
 
             //UpLoad/DownLoad Options
             _bucketName = ConfigurationManager.AppSettings["BucketName"];
-            _credentialsPath = ConfigurationManager.AppSettings["CredentialsPath"];
-            _folderPathUpload = ConfigurationManager.AppSettings["FolderPathUpload"];
-            _folderPathDownload = ConfigurationManager.AppSettings["FolderPathDownload"];
+
+            //Get main Dir.
+            var path = Directory.GetParent(Directory.GetParent(Directory.GetParent(Path.Combine(Directory.GetCurrentDirectory())).ToString()).ToString()).ToString();
+
+            _credentialsPath = Path.Combine(path, ConfigurationManager.AppSettings["CredentialsPath"]);
+            _folderPathUpload = Path.Combine(path, ConfigurationManager.AppSettings["FolderPathUpload"]);
+            _folderPathDownload = Path.Combine(path, ConfigurationManager.AppSettings["FolderPathDownload"]);
 
             //BUCKET:
             // Explicitly use service account credentials by specifying the private key file.
